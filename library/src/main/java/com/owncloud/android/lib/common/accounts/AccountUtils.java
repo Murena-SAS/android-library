@@ -21,6 +21,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Looper;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.owncloud.android.lib.common.OwnCloudClient;
@@ -138,18 +139,29 @@ public class AccountUtils {
         AccountManager am = AccountManager.get(context);
 
         String username = AccountUtils.getUsernameForAccount(account);
+        String password = getPassword(am, account);
+
+        return OwnCloudCredentialsFactory.newBasicCredentials(username, password);
+    }
+
+    @Nullable
+    public static String getPassword(AccountManager accountManager, Account account) {
         String password = null;
 
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            password = am.blockingGetAuthToken(account, AccountTypeUtils.getAuthTokenTypePass(account.type),
-                    false);
+            try {
+                password = accountManager.blockingGetAuthToken(account, AccountTypeUtils.getAuthTokenTypePass(account.type),
+                        false);
+            } catch (AuthenticatorException | IOException | OperationCanceledException e) {
+                Log_OC.w(TAG, "failed to retrieve authToken for account: " + account.name);
+            }
         }
 
         if (password == null) {
-            password = am.getPassword(account);
+            password = accountManager.getPassword(account);
         }
 
-        return OwnCloudCredentialsFactory.newBasicCredentials(username, password);
+        return password;
     }
 
 
@@ -284,6 +296,17 @@ public class AccountUtils {
         public Account getFailedAccount() {
             return mFailedAccount;
         }
+    }
+
+    @Nullable
+    public static String getUserId(@NonNull AccountManager accountManager, @NonNull Account account) {
+        String userId = accountManager.getUserData(account, AccountUtils.Constants.KEY_USER_ID);
+
+        if (userId == null || userId.isBlank()) {
+            userId = account.name;
+        }
+
+        return userId;
     }
 
 

@@ -72,13 +72,13 @@ public class OwnCloudClientFactory {
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
         AccountManager am = AccountManager.get(appContext);
         // TODO avoid calling to getUserData here
-        String userId = am.getUserData(account, AccountUtils.Constants.KEY_USER_ID);
+        String userId = AccountUtils.getUserId(am, account);
 
         OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
         client.setUserId(userId);
 
         String username = AccountUtils.getUsernameForAccount(account);
-        String password = am.blockingGetAuthToken(account, AccountTypeUtils.getAuthTokenTypePass(account.type), false);
+        String password = AccountUtils.getPassword(am, account);
         OwnCloudCredentials credentials = OwnCloudCredentialsFactory.newBasicCredentials(username, password);
 
         client.setCredentials(credentials);
@@ -96,7 +96,7 @@ public class OwnCloudClientFactory {
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
         AccountManager am = AccountManager.get(appContext);
         // TODO avoid calling to getUserData here
-        String userId = am.getUserData(account, AccountUtils.Constants.KEY_USER_ID);
+        String userId = AccountUtils.getUserId(am, account);
 
         OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
         client.setUserId(userId);
@@ -111,6 +111,10 @@ public class OwnCloudClientFactory {
 
         Bundle result = future.getResult();
         String password = result.getString(AccountManager.KEY_AUTHTOKEN);
+
+        if (password == null) {
+            password = am.getPassword(account);
+        }
 
         OwnCloudCredentials credentials = OwnCloudCredentialsFactory.newBasicCredentials(username, password);
 
@@ -198,11 +202,11 @@ public class OwnCloudClientFactory {
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
         AccountManager am = AccountManager.get(appContext);
         // TODO avoid calling to getUserData here
-        String userId = am.getUserData(account, AccountUtils.Constants.KEY_USER_ID);
+        String userId = AccountUtils.getUserId(am, account);
         String username = AccountUtils.getUsernameForAccount(account);
         String password;
         try {
-            password = am.blockingGetAuthToken(account, AccountTypeUtils.getAuthTokenTypePass(account.type), false);
+            password = AccountUtils.getPassword(am, account);
             if (password == null) {
                 Log_OC.e(TAG, "Error receiving password token (password==null)");
                 throw new AccountNotFoundException(account, "Error receiving password token (password==null)", null);
