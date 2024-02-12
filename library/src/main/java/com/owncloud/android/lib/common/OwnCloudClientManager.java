@@ -108,6 +108,11 @@ public class OwnCloudClientManager {
             if (savedAccount != null) {
                 String userId = accountManager.getUserData(account.getSavedAccount(),
                         AccountUtils.Constants.KEY_USER_ID);
+
+                if (userId == null || userId.isBlank()) {
+                    userId = account.getName();
+                }
+
                 client.setUserId(userId);
             }
 
@@ -198,6 +203,11 @@ public class OwnCloudClientManager {
             if (savedAccount != null) {
                 userId = accountManager.getUserData(account.getSavedAccount(),
                         AccountUtils.Constants.KEY_USER_ID);
+
+                if (userId == null || userId.isBlank()) {
+                    userId = account.getName();
+                }
+
             } else {
                 userId = "";
             }

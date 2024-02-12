@@ -19,6 +19,9 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Looper;
+
+import androidx.annotation.Nullable;
 
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudCredentials;
@@ -37,6 +40,9 @@ public class AccountUtils {
     public static final String WEBDAV_PATH_9_0 = "/remote.php/dav";
     public static final String DAV_UPLOAD = "/remote.php/dav/uploads";
     public static final String STATUS_PATH = "/status.php";
+
+    private static final String AT_SIGN = "@";
+    private static final String EELO_ACCOUNT_END_PART = "@e.email";
 
     /**
      * Extracts url server from the account
@@ -81,8 +87,18 @@ public class AccountUtils {
      * @param account An OC account
      * @return Username for the given account, extracted from the account.name
      */
-    public static String getUsernameForAccount(Account account) {
-        String username = null;
+    @Nullable
+    public static String getUsernameForAccount(@Nullable Account account) {
+        if (account == null) {
+            return null;
+        }
+
+        String username = account.name;
+
+        if (!username.contains(AT_SIGN) || username.endsWith(EELO_ACCOUNT_END_PART)) {
+            return username;
+        }
+
         try {
             username = account.name.substring(0, account.name.lastIndexOf('@'));
         } catch (Exception e) {
@@ -122,9 +138,16 @@ public class AccountUtils {
         AccountManager am = AccountManager.get(context);
 
         String username = AccountUtils.getUsernameForAccount(account);
+        String password = null;
 
-        String password = am.blockingGetAuthToken(account, AccountTypeUtils.getAuthTokenTypePass(account.type),
-                false);
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            password = am.blockingGetAuthToken(account, AccountTypeUtils.getAuthTokenTypePass(account.type),
+                    false);
+        }
+
+        if (password == null) {
+            password = am.getPassword(account);
+        }
 
         return OwnCloudCredentialsFactory.newBasicCredentials(username, password);
     }
@@ -198,8 +221,12 @@ public class AccountUtils {
             String[] cookies = cookiesString.split(";");
             if (cookies.length > 0) {
                 for (int i = 0; i < cookies.length; i++) {
-                    Cookie cookie = new Cookie();
                     int equalPos = cookies[i].indexOf('=');
+                    if (equalPos <= 0) {
+                        continue;
+                    }
+
+                    Cookie cookie = new Cookie();
                     cookie.setName(cookies[i].substring(0, equalPos));
                     cookie.setValue(cookies[i].substring(equalPos + 1));
                     cookie.setDomain(serverUri.getHost());    // VERY IMPORTANT
