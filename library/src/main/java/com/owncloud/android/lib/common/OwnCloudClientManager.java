@@ -18,6 +18,8 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.nextcloud.common.NextcloudClient;
 import com.owncloud.android.lib.common.accounts.AccountUtils;
 import com.owncloud.android.lib.common.utils.Log_OC;
@@ -238,8 +240,8 @@ public class OwnCloudClientManager {
     }
 
 
-    public OwnCloudClient removeClientFor(OwnCloudAccount account) {
-
+    @Nullable
+    public OwnCloudClient removeClientFor(@Nullable OwnCloudAccount account) {
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log_OC.d(TAG, "removeClientFor starting ");
         }
@@ -248,8 +250,12 @@ public class OwnCloudClientManager {
             return null;
         }
 
+        return removeClientForByName(account.getName());
+    }
+
+    @Nullable
+    public OwnCloudClient removeClientForByName(@Nullable String accountName) {
         OwnCloudClient client;
-        String accountName = account.getName();
         if (accountName != null) {
             client = mClientsWithKnownUsername.remove(accountName);
             clientsNewWithKnownUsername.remove(accountName);
@@ -271,7 +277,6 @@ public class OwnCloudClientManager {
             Log_OC.d(TAG, "removeClientFor finishing ");
         }
         return null;
-
     }
 
 
