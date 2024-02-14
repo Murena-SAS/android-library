@@ -66,6 +66,7 @@ public class OwnCloudClient extends HttpClient {
     private int mInstanceNumber;
 
     private AdvancedX509KeyManager keyManager;
+    private boolean shouldResetCookie = false;
 
     /**
      * Constructor
@@ -201,6 +202,10 @@ public class OwnCloudClient extends HttpClient {
 
             if (followRedirects) {
                 status = followRedirection(method).getLastStatus();
+            }
+
+            if (status == 401) {
+                shouldResetCookie = true;
             }
 
 //	        logCookiesAtRequest(method.getRequestHeaders(), "after");
@@ -448,5 +453,14 @@ public class OwnCloudClient extends HttpClient {
 
     public void setFollowRedirects(boolean followRedirects) {
         this.followRedirects = followRedirects;
+    }
+
+    public boolean shouldResetCookie() {
+        return shouldResetCookie;
+    }
+
+    public void resetCookie() {
+        getState().clearCookies();
+        shouldResetCookie = false;
     }
 }

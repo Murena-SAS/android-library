@@ -191,16 +191,23 @@ public class AccountUtils {
     }
 
     public static void saveClient(OwnCloudClient client, Account savedAccount, Context context) {
+        if (client == null) {
+            return;
+        }
 
         // Account Manager
         AccountManager ac = AccountManager.get(context.getApplicationContext());
 
-        if (client != null) {
-            String cookiesString = client.getCookiesString();
-            if (!"".equals(cookiesString)) {
-                ac.setUserData(savedAccount, Constants.KEY_COOKIES, cookiesString);
-                // Log_OC.d(TAG, "Saving Cookies: "+ cookiesString );
-            }
+        if (client.shouldResetCookie()) {
+            client.resetCookie();
+            ac.setUserData(savedAccount, Constants.KEY_COOKIES, "");
+            return;
+        }
+
+        String cookiesString = client.getCookiesString();
+        if (!"".equals(cookiesString)) {
+            ac.setUserData(savedAccount, Constants.KEY_COOKIES, cookiesString);
+            // Log_OC.d(TAG, "Saving Cookies: "+ cookiesString );
         }
 
     }
