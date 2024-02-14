@@ -129,6 +129,7 @@ public class OwnCloudClientManager {
             if (!reusingKnown && Log.isLoggable(TAG, Log.VERBOSE)) {
                 Log_OC.v(TAG, "reusing client for session " + sessionName);
             }
+            AccountUtils.restoreCookies(accountName, client, context);
             keepCredentialsUpdated(account, client);
             keepUriUpdated(account, client);
         }
