@@ -146,26 +146,24 @@ public class AccountUtils {
 
     @Nullable
     public static String getPassword(AccountManager accountManager, Account account) {
-        String password = null;
-        
-        if (Looper.myLooper() == null) {
-            return null;
+        String password = accountManager.getPassword(account);
+
+        if (password != null && !password.isBlank()) {
+            return password;
         }
 
-        if (Looper.myLooper() != Looper.getMainLooper()) {
-            try {
-                password = accountManager.blockingGetAuthToken(
-                    account,
-                    AccountTypeUtils.getAuthTokenTypePass(account.type),
-                    false
-                );
-            } catch (AuthenticatorException | IOException | OperationCanceledException e) {
-                Log_OC.w(TAG, "failed to retrieve authToken for account: " + account.name);
-            }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return password;
         }
 
-        if (password == null) {
-            password = accountManager.getPassword(account);
+        try {
+            password = accountManager.blockingGetAuthToken(
+                account,
+                AccountTypeUtils.getAuthTokenTypePass(account.type),
+                false
+            );
+        } catch (AuthenticatorException | IOException | OperationCanceledException e) {
+            Log_OC.w(TAG, "failed to retrieve authToken for account: " + account.name);
         }
 
         return password;
