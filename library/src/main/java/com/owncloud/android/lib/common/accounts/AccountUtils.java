@@ -147,6 +147,10 @@ public class AccountUtils {
     @Nullable
     public static String getPassword(AccountManager accountManager, Account account) {
         String password = null;
+        
+        if (Looper.myLooper() == null) {
+            retunr null;
+        }
 
         if (Looper.myLooper() != Looper.getMainLooper()) {
             try {
