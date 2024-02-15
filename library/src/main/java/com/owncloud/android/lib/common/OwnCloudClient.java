@@ -230,7 +230,8 @@ public class OwnCloudClient extends HttpClient {
         }
     }
 
-    /** if 401 received & cookie is passed on request, there is a chance the invalidated session-cookie is passed.
+    /*
+     * if 401 received & cookie is passed on request, there is a chance the invalidated session-cookie is passed.
      * Retry without passing the cookie.
      * <p>
      * if {@link #shouldResetCookie} true (means the retry already done once) OR, cookie is not passed on request:: ignore
