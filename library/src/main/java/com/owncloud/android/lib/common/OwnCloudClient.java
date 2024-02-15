@@ -190,6 +190,8 @@ public class OwnCloudClient extends HttpClient {
 //	        logCookiesAtState("before");
             method.setFollowRedirects(false);
 
+            boolean cookiePassedOnRequest = getState().getCookies().length > 0;
+
             int status = super.executeMethod(method);
 
             if (status >= 500 && status < 600 && DNSCache.isIPV6First(hostname)) {
@@ -205,7 +207,9 @@ public class OwnCloudClient extends HttpClient {
             }
 
             if (status == 401) {
-                shouldResetCookie = true;
+                status = handle401(method, cookiePassedOnRequest);
+            } else {
+                shouldResetCookie = false;
             }
 
 //	        logCookiesAtRequest(method.getRequestHeaders(), "after");
@@ -224,6 +228,21 @@ public class OwnCloudClient extends HttpClient {
             //Log_OC.d(TAG + " #" + mInstanceNumber, "Exception occurred", e);
             throw e;
         }
+    }
+
+    /** if 401 received & cookie is passed on request, there is a chance the invalidated session-cookie is passed.
+     * Retry without passing the cookie.
+     * <p>
+     * if {@link #shouldResetCookie} true (means the retry already done once) OR, cookie is not passed on request:: ignore
+     */
+    private int handle401(HttpMethod method, boolean cookiesPassedOnRequest) throws IOException {
+        if (shouldResetCookie || !cookiesPassedOnRequest) {
+            return 401;
+        }
+
+        shouldResetCookie = true;
+        getState().clearCookies();
+        return executeMethod(method);
     }
 
     private int retryMethodWithIPv4(HttpMethod method, String hostname) throws IOException {
