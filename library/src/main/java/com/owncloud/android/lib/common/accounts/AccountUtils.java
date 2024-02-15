@@ -149,7 +149,7 @@ public class AccountUtils {
         String password = null;
         
         if (Looper.myLooper() == null) {
-            retunr null;
+            return null;
         }
 
         if (Looper.myLooper() != Looper.getMainLooper()) {
