@@ -150,8 +150,11 @@ public class AccountUtils {
 
         if (Looper.myLooper() != Looper.getMainLooper()) {
             try {
-                password = accountManager.blockingGetAuthToken(account, AccountTypeUtils.getAuthTokenTypePass(account.type),
-                        false);
+                password = accountManager.blockingGetAuthToken(
+                    account,
+                    AccountTypeUtils.getAuthTokenTypePass(account.type),
+                    false
+                );
             } catch (AuthenticatorException | IOException | OperationCanceledException e) {
                 Log_OC.w(TAG, "failed to retrieve authToken for account: " + account.name);
             }
@@ -204,10 +207,9 @@ public class AccountUtils {
             return;
         }
 
-        String cookiesString = client.getCookiesString();
-        if (!"".equals(cookiesString)) {
+        final String cookiesString = client.getCookiesString();
+        if (!cookiesString.isBlank()) {
             ac.setUserData(savedAccount, Constants.KEY_COOKIES, cookiesString);
-            // Log_OC.d(TAG, "Saving Cookies: "+ cookiesString );
         }
 
     }
