@@ -108,7 +108,7 @@ public class OwnCloudClientManager {
             Account savedAccount = account.getSavedAccount();
 
             if (savedAccount != null) {
-                final String userId = AccountUtils.getUserId(accountManager, account.getSavedAccount());
+                final String userId = AccountUtils.getUpdatedUserId(accountManager, account.getSavedAccount());
 
                 client.setUserId(userId);
             }
@@ -199,7 +199,7 @@ public class OwnCloudClientManager {
 
             String userId;
             if (savedAccount != null) {
-                userId = AccountUtils.getUserId(accountManager, account.getSavedAccount());
+                userId = AccountUtils.getUpdatedUserId(accountManager, account.getSavedAccount());
             } else {
                 userId = "";
             }

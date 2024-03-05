@@ -72,7 +72,7 @@ public class OwnCloudClientFactory {
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
         AccountManager am = AccountManager.get(appContext);
         // TODO avoid calling to getUserData here
-        String userId = AccountUtils.getUserId(am, account);
+        String userId = AccountUtils.getUpdatedUserId(am, account);
 
         OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
         client.setUserId(userId);
@@ -96,7 +96,7 @@ public class OwnCloudClientFactory {
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
         AccountManager am = AccountManager.get(appContext);
         // TODO avoid calling to getUserData here
-        String userId = AccountUtils.getUserId(am, account);
+        String userId = AccountUtils.getUpdatedUserId(am, account);
 
         OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
         client.setUserId(userId);
@@ -202,7 +202,7 @@ public class OwnCloudClientFactory {
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
         AccountManager am = AccountManager.get(appContext);
         // TODO avoid calling to getUserData here
-        String userId = AccountUtils.getUserId(am, account);
+        String userId = AccountUtils.getUpdatedUserId(am, account);
         String username = AccountUtils.getUsernameForAccount(account);
         String password;
         try {

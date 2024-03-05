@@ -42,9 +42,6 @@ public class AccountUtils {
     public static final String DAV_UPLOAD = "/remote.php/dav/uploads";
     public static final String STATUS_PATH = "/status.php";
 
-    private static final String AT_SIGN = "@";
-    private static final String EELO_ACCOUNT_END_PART = "@e.email";
-
     /**
      * Extracts url server from the account
      *
@@ -95,17 +92,11 @@ public class AccountUtils {
         }
 
         String username = account.name;
-
-        if (!username.contains(AT_SIGN) || username.endsWith(EELO_ACCOUNT_END_PART)) {
-            return username;
+        if (username == null) {
+            return null;
         }
 
-        try {
-            username = account.name.substring(0, account.name.lastIndexOf('@'));
-        } catch (Exception e) {
-            Log_OC.e(TAG, "Couldn't get a username for the given account", e);
-        }
-        return username;
+        return username.trim();
     }
 
     /**
@@ -158,9 +149,9 @@ public class AccountUtils {
 
         try {
             password = accountManager.blockingGetAuthToken(
-                account,
-                AccountTypeUtils.getAuthTokenTypePass(account.type),
-                false
+                    account,
+                    AccountTypeUtils.getAuthTokenTypePass(account.type),
+                    false
             );
         } catch (AuthenticatorException | IOException | OperationCanceledException e) {
             Log_OC.w(TAG, "failed to retrieve authToken for account: " + account.name);
@@ -310,14 +301,52 @@ public class AccountUtils {
     }
 
     @Nullable
-    public static String getUserId(@NonNull AccountManager accountManager, @NonNull Account account) {
-        String userId = accountManager.getUserData(account, AccountUtils.Constants.KEY_USER_ID);
+    public static String getUpdatedUserId(@NonNull AccountManager accountManager, @NonNull Account account) {
+        final String userId = accountManager.getUserData(account, Constants.KEY_USER_ID);
 
-        if (userId == null || userId.isBlank()) {
-            userId = account.name;
+        if (userId != null && !userId.isBlank()) {
+            return userId.trim();
         }
 
-        return userId;
+        final String userName = account.name;
+        if (userName == null || userName.trim().isBlank()) {
+            return userName;
+        }
+
+        final String host = getHostForAccount(accountManager, account);
+        final String newUserId = retrieveUserId(host, userName);
+
+        accountManager.setUserData(account, Constants.KEY_USER_ID, newUserId);
+        return newUserId;
+    }
+
+    static String retrieveUserId(@Nullable String host, @NonNull String userName) {
+        userName = userName.trim();
+
+        if (host == null) {
+            return userName;
+        }
+
+        final String userNameEndPart = ("@" + host.trim()).toLowerCase();
+
+        if (!userName.toLowerCase().endsWith(userNameEndPart)) {
+            return userName;
+        }
+
+        int lengthOfUserId = userName.length() - userNameEndPart.length();  // abc@ff.com - @ff.com = abc
+        return userName.substring(0, lengthOfUserId);
+    }
+
+    @Nullable
+    private static String getHostForAccount(@NonNull AccountManager accountManager, @NonNull Account account) {
+        final String baseurl = accountManager.getUserData(account, Constants.KEY_OC_BASE_URL);
+
+        if (baseurl == null) {
+            return null;
+        }
+
+        final Uri baseUri = Uri.parse(baseurl);
+        return baseUri.getHost();
     }
 
 
