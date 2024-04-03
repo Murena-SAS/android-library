@@ -43,6 +43,7 @@ class NextcloudClient private constructor(
     val context: Context
 ) : NextcloudUriProvider by delegate {
     var followRedirects = true
+    var oidcLoginWithToken = false
 
     constructor(
         baseUri: Uri,
@@ -62,7 +63,7 @@ class NextcloudClient private constructor(
         @JvmStatic
         val TAG = NextcloudClient::class.java.simpleName
 
-        private fun createDefaultClient(context: Context): OkHttpClient {
+        private fun createDefaultClient(context: Context, cookieJar: CookieJar = CookieJar.NO_COOKIES): OkHttpClient {
             val trustManager = AdvancedX509TrustManager(NetworkUtils.getKnownServersStore(context))
             val keyManager = AdvancedX509KeyManager(context)
 
@@ -83,7 +84,7 @@ class NextcloudClient private constructor(
 
             return OkHttpClient
                 .Builder()
-                .cookieJar(CookieJar.NO_COOKIES)
+                .cookieJar(cookieJar)
                 .connectTimeout(DEFAULT_CONNECTION_TIMEOUT_LONG, TimeUnit.MILLISECONDS)
                 .readTimeout(DEFAULT_DATA_TIMEOUT_LONG, TimeUnit.MILLISECONDS)
                 .callTimeout(
@@ -101,8 +102,9 @@ class NextcloudClient private constructor(
         baseUri: Uri,
         userId: String,
         credentials: String,
-        context: Context
-    ) : this(baseUri, userId, credentials, createDefaultClient(context), context)
+        context: Context,
+        cookieJar: CookieJar = CookieJar.NO_COOKIES
+    ) : this(baseUri, userId, credentials, createDefaultClient(context, cookieJar), context)
 
     @Suppress("TooGenericExceptionCaught")
     fun <T> execute(remoteOperation: RemoteOperation<T>): RemoteOperationResult<T> {

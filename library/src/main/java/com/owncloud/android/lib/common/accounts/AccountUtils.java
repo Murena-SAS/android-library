@@ -14,25 +14,34 @@ package com.owncloud.android.lib.common.accounts;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerFuture;
 import android.accounts.AccountsException;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
+import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.nextcloud.common.OkHttpPersistentCookieJar;
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudCredentials;
 import com.owncloud.android.lib.common.OwnCloudCredentialsFactory;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.status.OwnCloudVersion;
 
+import net.openid.appauth.AuthState;
+
 import org.apache.commons.httpclient.Cookie;
+import org.json.JSONException;
 
 import java.io.IOException;
+
+import okhttp3.CookieJar;
 
 public class AccountUtils {
 
@@ -129,10 +138,60 @@ public class AccountUtils {
             throws OperationCanceledException, AuthenticatorException, IOException {
         AccountManager am = AccountManager.get(context);
 
-        String username = AccountUtils.getUsernameForAccount(account);
+        String username = getUsernameForAccount(account);
+        String accessToken = getAccessToken(am, account);
+
+        if (accessToken != null) {
+            return OwnCloudCredentialsFactory.newBearerCredentials(username, accessToken);
+        }
+
         String password = getPassword(am, account);
 
         return OwnCloudCredentialsFactory.newBasicCredentials(username, password);
+    }
+
+    @NonNull
+    public static OwnCloudCredentials getCredentialForAccount(@NonNull Context context, @NonNull Account account, @NonNull Activity activity) throws OperationCanceledException, AuthenticatorException, IOException {
+        AccountManager accountManager = AccountManager.get(context);
+
+        String username = getUsernameForAccount(account);
+
+        String accessToken = getAccessToken(accountManager, account);
+        if (accessToken != null) {
+            return OwnCloudCredentialsFactory.newBearerCredentials(username, accessToken);
+        }
+
+        AccountManagerFuture<Bundle> future = accountManager.getAuthToken(account,
+                AccountTypeUtils.getAuthTokenTypePass(account.type), null,
+                activity, null, null);
+
+        Bundle result = future.getResult();
+        String password = result.getString(AccountManager.KEY_AUTHTOKEN);
+
+        if (password == null) {
+            password = accountManager.getPassword(account);
+        }
+
+        return OwnCloudCredentialsFactory.newBasicCredentials(username, password);
+    }
+
+
+    @Nullable
+    public static String getAccessToken(@NonNull AccountManager accountManager, @NonNull Account account) {
+        String authStateString = accountManager.getUserData(account, Constants.KEY_AUTH_STATE);
+
+        if (authStateString == null || authStateString.trim().isBlank()) {
+            return null;
+        }
+
+        try {
+            AuthState authState = AuthState.jsonDeserialize(authStateString);
+            return authState.getAccessToken();
+        } catch (JSONException e) {
+            Log_OC.e(TAG, e.getMessage());
+        }
+
+        return null;
     }
 
     @Nullable
@@ -262,23 +321,40 @@ public class AccountUtils {
     public static void restoreCookies(String accountName, OwnCloudClient client, Context context) {
         Log_OC.d(TAG, "Restoring cookies for " + accountName);
 
-        // Account Manager
-        AccountManager am = AccountManager.get(context.getApplicationContext());
-
-        // Get account
-        Account account = null;
-        Account accounts[] = am.getAccounts();
-        for (Account a : accounts) {
-            if (a.name.equals(accountName)) {
-                account = a;
-                break;
-            }
-        }
+        Account account = getAccount(context, accountName);
 
         // Restoring cookies
         if (account != null) {
             restoreCookies(account, client, context);
         }
+    }
+
+    @Nullable
+    private static Account getAccount(@NonNull Context context, @Nullable String accountName) {
+        if (accountName == null) {
+            return null;
+        }
+
+        AccountManager accountManager = AccountManager.get(context.getApplicationContext());
+
+        Account[] accounts = accountManager.getAccounts();
+        for (Account account : accounts) {
+            if (account.name.equals(accountName)) {
+                return account;
+            }
+        }
+
+        return null;
+    }
+
+    @NonNull
+    public static CookieJar getOkhttpCookieJar(@NonNull Context context, @Nullable String accountName) {
+        Account account = getAccount(context, accountName);
+        if (account == null) {
+            return CookieJar.NO_COOKIES;
+        }
+
+        return new OkHttpPersistentCookieJar(context.getApplicationContext(), account);
     }
 
     public static class AccountNotFoundException extends AccountsException {
@@ -390,6 +466,12 @@ public class AccountUtils {
          * User ID, internally and never changing id of user, used by e.g. dav/trashbin/$userId/trash
          */
         public static final String KEY_USER_ID = "oc_id";
+
+        public static final String KEY_AUTH_STATE = "auth_state";
+
+        public static final String KEY_OKHTTP_COOKIES = "cookie_key";
+
+        public static final String OKHTTP_COOKIE_SEPARATOR = "<end_cookie>";
     }
 
 }

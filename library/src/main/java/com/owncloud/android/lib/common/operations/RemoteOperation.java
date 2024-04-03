@@ -49,6 +49,7 @@ public abstract class RemoteOperation<T> implements Runnable {
      * OCS API header name
      */
     public static final String OCS_API_HEADER = "OCS-APIREQUEST";
+    public static final String OIDC_LOGIN_WITH_TOKEN = "OIDC-LOGIN-WITH-TOKEN";
     public static final String OCS_ETAG_HEADER = "If-None-Match";
 
     /**

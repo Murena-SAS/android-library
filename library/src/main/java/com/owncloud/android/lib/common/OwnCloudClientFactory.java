@@ -14,17 +14,15 @@ package com.owncloud.android.lib.common;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Bundle;
 
 import com.nextcloud.common.NextcloudClient;
+import com.nextcloud.common.OkHttpPersistentCookieJar;
 import com.nextcloud.common.User;
-import com.owncloud.android.lib.common.accounts.AccountTypeUtils;
 import com.owncloud.android.lib.common.accounts.AccountUtils;
 import com.owncloud.android.lib.common.accounts.AccountUtils.AccountNotFoundException;
 import com.owncloud.android.lib.common.network.NetworkUtils;
@@ -34,6 +32,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 
+import okhttp3.CookieJar;
 import okhttp3.Credentials;
 
 public class OwnCloudClientFactory {
@@ -77,10 +76,7 @@ public class OwnCloudClientFactory {
         OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
         client.setUserId(userId);
 
-        String username = AccountUtils.getUsernameForAccount(account);
-        String password = AccountUtils.getPassword(am, account);
-        OwnCloudCredentials credentials = OwnCloudCredentialsFactory.newBasicCredentials(username, password);
-
+        OwnCloudCredentials credentials = AccountUtils.getCredentialsForAccount(appContext, account);
         client.setCredentials(credentials);
 
         // Restore cookies
@@ -101,22 +97,7 @@ public class OwnCloudClientFactory {
         OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
         client.setUserId(userId);
 
-        String username = AccountUtils.getUsernameForAccount(account);
-        //String password = am.getPassword(account);
-        //String password = am.blockingGetAuthToken(account, MainApp.getAuthTokenTypePass(),
-        // false);
-        AccountManagerFuture<Bundle> future = am.getAuthToken(account,
-                                                              AccountTypeUtils.getAuthTokenTypePass(account.type), null,
-                                                              currentActivity, null, null);
-
-        Bundle result = future.getResult();
-        String password = result.getString(AccountManager.KEY_AUTHTOKEN);
-
-        if (password == null) {
-            password = am.getPassword(account);
-        }
-
-        OwnCloudCredentials credentials = OwnCloudCredentialsFactory.newBasicCredentials(username, password);
+        OwnCloudCredentials credentials = AccountUtils.getCredentialForAccount(appContext, account, currentActivity);
 
         client.setCredentials(credentials);
         
@@ -164,7 +145,9 @@ public class OwnCloudClientFactory {
                                                         String userId,
                                                         String credentials,
                                                         Context context,
-                                                        boolean followRedirects) {
+                                                        boolean followRedirects,
+                                                        boolean loginWithToken,
+                                                        CookieJar cookieJar) {
         try {
             NetworkUtils.registerAdvancedSslContext(true, context);
         } catch (GeneralSecurityException e) {
@@ -176,8 +159,9 @@ public class OwnCloudClientFactory {
                     " in the system will be used for HTTPS connections", e);
         }
 
-        NextcloudClient client = new NextcloudClient(uri, userId, credentials, context);
+        NextcloudClient client = new NextcloudClient(uri, userId, credentials, context, cookieJar);
         client.setFollowRedirects(followRedirects);
+        client.setOidcLoginWithToken(loginWithToken);
 
         return client;
     }
@@ -204,23 +188,38 @@ public class OwnCloudClientFactory {
         // TODO avoid calling to getUserData here
         String userId = AccountUtils.getUpdatedUserId(am, account);
         String username = AccountUtils.getUsernameForAccount(account);
+
+        if (username == null || username.isEmpty()) {
+            throw new AccountNotFoundException(
+                    account,
+                    "Username could not be retrieved",
+                    null);
+        }
+
+        final CookieJar cookieJar = new OkHttpPersistentCookieJar(appContext, account);
+
+        final String accessToken = AccountUtils.getAccessToken(am, account);
+        if (accessToken != null) {
+            String credential = "Bearer " + accessToken;
+            return createNextcloudClient(baseUri,
+                    userId,
+                    credential,
+                    appContext,
+                    true,
+                    true,
+                    cookieJar);
+        }
+
         String password;
         try {
             password = AccountUtils.getPassword(am, account);
-            if (password == null) {
-                Log_OC.e(TAG, "Error receiving password token (password==null)");
-                throw new AccountNotFoundException(account, "Error receiving password token (password==null)", null);
+            if (password == null || password.isEmpty()) {
+                Log_OC.e(TAG, "Error receiving password token (password==null || empty)");
+                throw new AccountNotFoundException(account, "Error receiving password token (password==null || empty)", null);
             }
         } catch (Exception e) {
             Log_OC.e(TAG, "Error receiving password token", e);
             throw new AccountNotFoundException(account, "Error receiving password token", e);
-        }
-
-        if (username == null || username.isEmpty() || password.isEmpty()) {
-            throw new AccountNotFoundException(
-                    account,
-                    "Username or password could not be retrieved",
-                    null);
         }
 
         // Restore cookies
@@ -231,6 +230,8 @@ public class OwnCloudClientFactory {
                                      userId,
                                      Credentials.basic(username, password, StandardCharsets.UTF_8),
                                      appContext,
-                                     true);
+                                     true,
+                                     false,
+                                     cookieJar);
     }
 }

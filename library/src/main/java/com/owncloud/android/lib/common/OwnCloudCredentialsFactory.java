@@ -18,6 +18,10 @@ public class OwnCloudCredentialsFactory {
 		return new OwnCloudBasicCredentials(username, password);
 	}
 
+	public static OwnCloudCredentials newBearerCredentials(String username, String accessToken) {
+		return new OwnCloudBearerCredentials(username, accessToken);
+	}
+
 	public static final OwnCloudCredentials getAnonymousCredentials() {
 		if (sAnonymousCredentials == null) {
 			sAnonymousCredentials = new OwnCloudAnonymousCredentials();

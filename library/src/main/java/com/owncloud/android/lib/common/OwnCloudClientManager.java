@@ -18,6 +18,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.nextcloud.common.NextcloudClient;
@@ -33,7 +34,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * 
  * @author David A. Velasco
  * @author masensio
  * @author Tobias Kaminsky
@@ -184,13 +184,6 @@ public class OwnCloudClientManager {
 
         if (client == null) {
 
-
-            // TODO v2
-            //client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
-            // enable cookie tracking
-
-            //AccountUtils.restoreCookies(accountName, client, context);
-
             account.loadCredentials(context);
             String credentials = account.getCredentials().toOkHttpCredentials();
 
@@ -210,7 +203,9 @@ public class OwnCloudClientManager {
                     userId,
                     credentials,
                     context.getApplicationContext(),
-                    true);
+                    true,
+                    isOIDCLogin(account),
+                    AccountUtils.getOkhttpCookieJar(context, accountName));
 
             if (accountName != null) {
                 clientsNewWithKnownUsername.put(accountName, client);
@@ -225,12 +220,13 @@ public class OwnCloudClientManager {
                 }
             }
         } else {
+
             if (!reusingKnown && Log.isLoggable(TAG, Log.VERBOSE)) {
                 Log_OC.v(TAG, "reusing client for session " + sessionName);
             }
-            // TODO v2
-            // keepCredentialsUpdated(account, client);
-            // keepUriUpdated(account, client);
+
+            keepCredentialsUpdated(context, account, client);
+            keepUriUpdated(account, client);
         }
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -238,6 +234,23 @@ public class OwnCloudClientManager {
         }
 
         return client;
+    }
+
+    private void keepCredentialsUpdated(@NonNull Context context, @NonNull OwnCloudAccount account, @NonNull NextcloudClient client) throws OperationCanceledException, AuthenticatorException, IOException {
+        account.loadCredentials(context);
+        client.setCredentials(account.getCredentials().toOkHttpCredentials());
+        client.setOidcLoginWithToken(isOIDCLogin(account));
+    }
+
+    private void keepUriUpdated(@NonNull OwnCloudAccount account, @NonNull NextcloudClient client) {
+        final Uri recentUri = account.getBaseUri();
+        if (!recentUri.equals(client.getBaseUri())) {
+            client.setBaseUri(recentUri);
+        }
+    }
+
+    private boolean isOIDCLogin(@NonNull OwnCloudAccount account) {
+        return (account.getCredentials() instanceof OwnCloudBearerCredentials);
     }
 
 
