@@ -25,7 +25,6 @@ import com.nextcloud.common.NextcloudUriDelegate;
 import com.owncloud.android.lib.common.accounts.AccountUtils;
 import com.owncloud.android.lib.common.network.AdvancedX509KeyManager;
 import com.owncloud.android.lib.common.network.RedirectionPath;
-import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.utils.Log_OC;
 
 import org.apache.commons.httpclient.Cookie;
@@ -236,8 +235,6 @@ public class OwnCloudClient extends HttpClient {
     private void addBearerCredentialIfRequired(HttpMethod method) {
         if (credentials instanceof OwnCloudBearerCredentials) {
             method.setRequestHeader("Authorization", "Bearer " + credentials.getAuthToken());
-            method.setRequestHeader(RemoteOperation.OIDC_LOGIN_WITH_TOKEN, "true");
-            method.setRequestHeader(RemoteOperation.OCS_API_HEADER, "true");
         }
     }
 

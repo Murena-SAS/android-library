@@ -56,6 +56,7 @@ public abstract class RemoteOperation<T> implements Runnable {
      * OCS API header value
      */
     public static final String OCS_API_HEADER_VALUE = "true";
+    public static final String OIDC_LOGIN_WITH_TOKEN_VALUE = "true";
 
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String FORM_URLENCODED = "application/x-www-form-urlencoded";

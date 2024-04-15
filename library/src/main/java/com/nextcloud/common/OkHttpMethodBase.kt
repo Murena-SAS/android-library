@@ -116,11 +116,6 @@ abstract class OkHttpMethodBase(
             temp.header(RemoteOperation.OCS_API_HEADER, RemoteOperation.OCS_API_HEADER_VALUE)
         }
 
-        if (nextcloudClient.oidcLoginWithToken) {
-            temp.header(RemoteOperation.OIDC_LOGIN_WITH_TOKEN, "true")
-            temp.header(RemoteOperation.OCS_API_HEADER, "true")
-        }
-
         applyType(temp)
 
         val request = temp.build()
