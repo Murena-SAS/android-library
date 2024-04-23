@@ -45,7 +45,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -426,16 +431,23 @@ public class OwnCloudClient extends HttpClient {
 
     @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "replaced by NextcloudClient")
     public String getCookiesString() {
+        Map<String, Cookie> cookieMap = new HashMap<>();
         Cookie[] cookies = getState().getCookies();
-        String cookiesString = "";
-        for (Cookie cookie : cookies) {
-            cookiesString = cookiesString + cookie.toString() + ";";
+        StringBuilder cookiesString = new StringBuilder();
 
-            // logCookie(cookie);
+        for (Cookie cookie : cookies) {
+            if (cookie.isExpired()) {
+                continue;
+            }
+
+            cookieMap.put(cookie.getName(), cookie);
         }
 
-        return cookiesString;
+        for (Cookie cookie: cookieMap.values()) {
+            cookiesString.append(cookie.toString()).append(";");
+        }
 
+        return cookiesString.toString();
     }
 
     public int getConnectionTimeout() {

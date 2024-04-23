@@ -109,7 +109,7 @@ abstract class OkHttpMethodBase(
         val temp = requestBuilder.url(buildQueryParameter())
 
         requestHeaders[AUTHORIZATION] = nextcloudClient.credentials
-        requestHeaders[USER_AGENT] = OwnCloudClientManagerFactory.getUserAgent()
+        requestHeaders[USER_AGENT] = OwnCloudClientManagerFactory.getNextCloudUserAgent()
         requestHeaders.forEach { (name, value) -> temp.header(name, value) }
 
         if (useOcsApiRequestHeader) {
@@ -136,7 +136,7 @@ abstract class OkHttpMethodBase(
     fun execute(client: PlainClient): Int {
         val temp = requestBuilder.url(buildQueryParameter())
 
-        requestHeaders[USER_AGENT] = OwnCloudClientManagerFactory.getUserAgent()
+        requestHeaders[USER_AGENT] = OwnCloudClientManagerFactory.getNextCloudUserAgent()
         requestHeaders.forEach { (name, value) -> temp.header(name, value) }
 
         applyType(temp)

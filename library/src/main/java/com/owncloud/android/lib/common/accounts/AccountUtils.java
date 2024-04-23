@@ -40,6 +40,8 @@ import org.apache.commons.httpclient.Cookie;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import okhttp3.CookieJar;
 
@@ -290,17 +292,28 @@ public class AccountUtils {
             Log_OC.e(TAG, e.getMessage());
         }
 
+        client.getState().clearCookies();
+
         if (cookiesString != null) {
             String[] cookies = cookiesString.split(";");
             if (cookies.length > 0) {
+                Set<String> cookieNames = new HashSet<>();
+
                 for (int i = 0; i < cookies.length; i++) {
                     int equalPos = cookies[i].indexOf('=');
                     if (equalPos <= 0) {
                         continue;
                     }
 
+                    String cookieName = cookies[i].substring(0, equalPos);
+                    if (cookieNames.contains(cookieName)) {
+                        continue;
+                    }
+
+                    cookieNames.add(cookieName);
+
                     Cookie cookie = new Cookie();
-                    cookie.setName(cookies[i].substring(0, equalPos));
+                    cookie.setName(cookieName);
                     cookie.setValue(cookies[i].substring(equalPos + 1));
                     cookie.setDomain(serverUri.getHost());    // VERY IMPORTANT
                     cookie.setPath(serverUri.getPath());    // VERY IMPORTANT
