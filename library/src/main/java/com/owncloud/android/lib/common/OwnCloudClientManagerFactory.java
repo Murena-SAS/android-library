@@ -12,8 +12,8 @@ package com.owncloud.android.lib.common;
 
 public class OwnCloudClientManagerFactory {
     private static OwnCloudClientManager sDefaultSingleton;
-    private static String ocUserAgent = "eOS (Android) Owncloud-android";
-    private static String ncUserAgent = "eOS (Android) Nextcloud-android";
+    private static String ocUserAgent = "/e/OS v2 (Android) Owncloud-android";
+    private static String ncUserAgent = "/e/OS v2 (Android) Nextcloud-android";
     private static String proxyHost = "";
     private static int proxyPort = -1;
 
