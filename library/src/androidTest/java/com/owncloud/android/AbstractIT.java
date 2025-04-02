@@ -92,7 +92,9 @@ public abstract class AbstractIT {
         String loginName = arguments.getString("TEST_SERVER_USERNAME");
         String password = arguments.getString("TEST_SERVER_PASSWORD");
 
-        client = OwnCloudClientFactory.createOwnCloudClient(url, context, true);
+        client = OwnCloudClientFactory.createOwnCloudClient(url, context, true,
+                OwnCloudClient.USE_COOKIES);
+
         client.setCredentials(new OwnCloudBasicCredentials(loginName, password));
         client.setUserId(loginName); // for test same as userId
 
@@ -100,7 +102,9 @@ public abstract class AbstractIT {
         String loginName2 = arguments.getString("TEST_SERVER_USERNAME2");
         String password2 = arguments.getString("TEST_SERVER_PASSWORD2");
 
-        client2 = OwnCloudClientFactory.createOwnCloudClient(url, context, true);
+        client2 = OwnCloudClientFactory.createOwnCloudClient(url, context, true,
+                OwnCloudClient.USE_COOKIES);
+
         client2.setCredentials(new OwnCloudBasicCredentials(loginName2, password2));
         client2.setUserId(loginName2); // for test same as userId
 

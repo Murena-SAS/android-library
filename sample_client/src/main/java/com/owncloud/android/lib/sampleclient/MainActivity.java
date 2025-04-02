@@ -67,7 +67,9 @@ public class MainActivity extends Activity implements OnRemoteOperationListener,
         mHandler = new Handler();
 
         Uri serverUri = Uri.parse(getString(R.string.server_base_url));
-        mClient = OwnCloudClientFactory.createOwnCloudClient(serverUri, this, true);
+        mClient = OwnCloudClientFactory.createOwnCloudClient(serverUri, this, true,
+                OwnCloudClient.USE_COOKIES);
+
         mClient.setCredentials(
                 OwnCloudCredentialsFactory.newBasicCredentials(
                         getString(R.string.username),

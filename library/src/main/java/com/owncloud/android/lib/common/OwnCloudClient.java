@@ -41,16 +41,16 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.params.HttpParams;
 
+import androidx.annotation.IntDef;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -72,11 +72,18 @@ public class OwnCloudClient extends HttpClient {
 
     private AdvancedX509KeyManager keyManager;
     private boolean shouldResetCookie = false;
+    private @CookiesPolicy int cookiesPolicy;
+
+    public static final int USE_COOKIES = 0;
+    public static final int DONT_USE_COOKIES = 1;
+    @IntDef({USE_COOKIES, DONT_USE_COOKIES})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface CookiesPolicy {}
 
     /**
      * Constructor
      */
-    public OwnCloudClient(Uri baseUri, HttpConnectionManager connectionMgr, Context context) {
+    public OwnCloudClient(Uri baseUri, HttpConnectionManager connectionMgr, Context context, @CookiesPolicy int cookiesPolicy) {
         super(connectionMgr);
 
         if (baseUri == null) {
@@ -84,6 +91,8 @@ public class OwnCloudClient extends HttpClient {
         }
         this.keyManager = new AdvancedX509KeyManager(context);
         nextcloudUriDelegate = new NextcloudUriDelegate(baseUri);
+
+        this.cookiesPolicy = cookiesPolicy;
 
         mInstanceNumber = sInstanceCounter++;
         Log_OC.d(TAG + " #" + mInstanceNumber, "Creating OwnCloudClient");
@@ -196,6 +205,15 @@ public class OwnCloudClient extends HttpClient {
 //	        logCookiesAtRequest(method.getRequestHeaders(), "before");
 //	        logCookiesAtState("before");
             method.setFollowRedirects(false);
+
+            /*
+             * We want to clear cookies here specifically for Notes API.
+             * Indeed, The Notes server APIs have the Cross-Origin Resource Sharing (CORS) flag,
+             * so are not able to deal with cookie sessions.
+             */
+            if (cookiesPolicy == DONT_USE_COOKIES && method.getURI().getEscapedURI().contains("/apps/notes/")) {
+                getState().clearCookies();
+            }
 
             boolean cookiePassedOnRequest = getState().getCookies().length > 0;
 
@@ -502,5 +520,9 @@ public class OwnCloudClient extends HttpClient {
     public void resetCookie() {
         getState().clearCookies();
         shouldResetCookie = false;
+    }
+
+    public @CookiesPolicy int getCookiesPolicy() {
+        return cookiesPolicy;
     }
 }

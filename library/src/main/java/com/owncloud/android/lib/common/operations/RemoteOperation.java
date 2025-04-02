@@ -126,7 +126,11 @@ public abstract class RemoteOperation<T> implements Runnable {
         mContext = context.getApplicationContext();
         try {
             OwnCloudAccount ocAccount = new OwnCloudAccount(mAccount, mContext);
-            mClient = OwnCloudClientManagerFactory.getDefaultSingleton().getClientFor(ocAccount, mContext);
+            mClient = OwnCloudClientManagerFactory.getDefaultSingleton().getClientFor(
+                    ocAccount,
+                    mContext,
+                    OwnCloudClient.USE_COOKIES
+            );
         } catch (Exception e) {
             Log_OC.e(TAG, "Error while trying to access to " + mAccount.name, e);
             return new RemoteOperationResult<T>(e);
@@ -360,12 +364,12 @@ public abstract class RemoteOperation<T> implements Runnable {
                     	/** DEPRECATED BLOCK - will be removed at version 1.0 */
                         if (mCallerActivity != null) {
                             mClient = OwnCloudClientFactory.createOwnCloudClient(
-                            		mAccount, mContext, mCallerActivity);
+                            		mAccount, mContext, mCallerActivity, OwnCloudClient.USE_COOKIES);
                         } else {
                         /** EOF DEPRECATED */
                         	OwnCloudAccount ocAccount = new OwnCloudAccount(mAccount, mContext);
                             mClient = OwnCloudClientManagerFactory.getDefaultSingleton().
-                            		getClientFor(ocAccount, mContext);
+                            		getClientFor(ocAccount, mContext, OwnCloudClient.USE_COOKIES);
                         }
                         
                     } else {

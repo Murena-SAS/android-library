@@ -453,7 +453,9 @@ public class SearchRemoteOperationIT extends AbstractIT {
         Bundle arguments = InstrumentationRegistry.getArguments();
         Uri url = Uri.parse(arguments.getString("TEST_SERVER_URL"));
 
-        OwnCloudClient client = OwnCloudClientFactory.createOwnCloudClient(url, context, true);
+        OwnCloudClient client = OwnCloudClientFactory.createOwnCloudClient(url, context, true,
+                OwnCloudClient.USE_COOKIES);
+
         client.setCredentials(new OwnCloudBasicCredentials("test@test", "test"));
         client.setUserId("test@test"); // for test same as userId
 

@@ -55,6 +55,7 @@ public class OwnCloudClientFactory {
      * 
      * @param account                       The ownCloud account
      * @param appContext                    Android application context
+     * @param cookiesPolicy                 The cookies policy to use
      * @return                              A OwnCloudClient object ready to be used
      * @throws AuthenticatorException       If the authenticator failed to get the authorization
      *                                      token for the account.
@@ -64,8 +65,11 @@ public class OwnCloudClientFactory {
      *                                      authorization token for the account.
      * @throws AccountNotFoundException     If 'account' is unknown for the AccountManager
      */
-    public static OwnCloudClient createOwnCloudClient(Account account, Context appContext)
-            throws OperationCanceledException, AuthenticatorException, IOException,
+    public static OwnCloudClient createOwnCloudClient(
+            Account account,
+            Context appContext,
+            @OwnCloudClient.CookiesPolicy int cookiesPolicy
+    ) throws OperationCanceledException, AuthenticatorException, IOException,
             AccountNotFoundException {
         //Log_OC.d(TAG, "Creating OwnCloudClient associated to " + account.name);
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
@@ -73,37 +77,45 @@ public class OwnCloudClientFactory {
         // TODO avoid calling to getUserData here
         String userId = AccountUtils.getUpdatedUserId(am, account);
 
-        OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
+        OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true, cookiesPolicy);
         client.setUserId(userId);
 
         OwnCloudCredentials credentials = AccountUtils.getCredentialsForAccount(appContext, account);
         client.setCredentials(credentials);
 
         // Restore cookies
-        AccountUtils.restoreCookies(account, client, appContext);
+        if (cookiesPolicy == OwnCloudClient.USE_COOKIES) {
+            AccountUtils.restoreCookies(account, client, appContext);
+        }
         
         return client;
     }
 
 
-    public static OwnCloudClient createOwnCloudClient(Account account, Context appContext, Activity currentActivity)
-            throws OperationCanceledException, AuthenticatorException, IOException,
+    public static OwnCloudClient createOwnCloudClient(
+            Account account,
+            Context appContext,
+            Activity currentActivity,
+            @OwnCloudClient.CookiesPolicy int cookiesPolicy
+    ) throws OperationCanceledException, AuthenticatorException, IOException,
             AccountNotFoundException {
         Uri baseUri = Uri.parse(AccountUtils.getBaseUrlForAccount(appContext, account));
         AccountManager am = AccountManager.get(appContext);
         // TODO avoid calling to getUserData here
         String userId = AccountUtils.getUpdatedUserId(am, account);
 
-        OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true);
+        OwnCloudClient client = createOwnCloudClient(baseUri, appContext, true, cookiesPolicy);
         client.setUserId(userId);
 
         OwnCloudCredentials credentials = AccountUtils.getCredentialForAccount(appContext, account, currentActivity);
 
         client.setCredentials(credentials);
-        
+
         // Restore cookies
-        AccountUtils.restoreCookies(account, client, appContext);
-        
+        if (cookiesPolicy == OwnCloudClient.USE_COOKIES) {
+            AccountUtils.restoreCookies(account, client, appContext);
+        }
+
         return client;
     }
     
@@ -115,7 +127,12 @@ public class OwnCloudClientFactory {
      * @param context   Android context where the OwnCloudClient is being created.
      * @return          A OwnCloudClient object ready to be used
      */
-    public static OwnCloudClient createOwnCloudClient(Uri uri, Context context, boolean followRedirects) {
+    public static OwnCloudClient createOwnCloudClient(
+            Uri uri,
+            Context context,
+            boolean followRedirects,
+            @OwnCloudClient.CookiesPolicy int cookiesPolicy
+    ) {
         try {
             NetworkUtils.registerAdvancedSslContext(true, context);
         }  catch (GeneralSecurityException e) {
@@ -126,7 +143,7 @@ public class OwnCloudClientFactory {
             Log_OC.e(TAG, "The local server truststore could not be read. Default SSL management" +
                     " in the system will be used for HTTPS connections", e);
         }
-        OwnCloudClient client = new OwnCloudClient(uri, NetworkUtils.getMultiThreadedConnManager(), context);
+        OwnCloudClient client = new OwnCloudClient(uri, NetworkUtils.getMultiThreadedConnManager(), context, cookiesPolicy);
         client.setDefaultTimeouts(DEFAULT_DATA_TIMEOUT, DEFAULT_CONNECTION_TIMEOUT);
         client.setFollowRedirects(followRedirects);
 

@@ -50,7 +50,11 @@ public class OwnCloudClientManager {
     private ConcurrentMap<String, NextcloudClient> clientsNewWithUnknownUsername = new ConcurrentHashMap<>();
 
     @Deprecated
-    public OwnCloudClient getClientFor(OwnCloudAccount account, Context context) throws OperationCanceledException,
+    public OwnCloudClient getClientFor(
+            OwnCloudAccount account,
+            Context context,
+            @OwnCloudClient.CookiesPolicy int cookiesPolicy
+    ) throws OperationCanceledException,
             AuthenticatorException, IOException {
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -95,7 +99,7 @@ public class OwnCloudClientManager {
             // no client to reuse - create a new one
             // TODO remove dependency on OwnCloudClientFactory
             client = OwnCloudClientFactory.createOwnCloudClient(account.getBaseUri(), context.getApplicationContext(),
-                    true);
+                    true, cookiesPolicy);
             client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
             // enable cookie tracking
 

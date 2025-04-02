@@ -189,7 +189,9 @@ public class GetSharesRemoteOperationIT extends AbstractIT {
         String loginName = "user1";
         String password = "user1";
 
-        OwnCloudClient clientUser1 = OwnCloudClientFactory.createOwnCloudClient(url, context, true);
+        OwnCloudClient clientUser1 = OwnCloudClientFactory.createOwnCloudClient(url, context, true,
+                OwnCloudClient.USE_COOKIES);
+
         clientUser1.setCredentials(new OwnCloudBasicCredentials(loginName, password));
         clientUser1.setUserId(loginName); // for test same as userId
 

@@ -248,7 +248,7 @@ public class AccountUtils {
     }
 
     public static void saveClient(OwnCloudClient client, Account savedAccount, Context context) {
-        if (client == null) {
+        if (client == null || client.getCookiesPolicy() != OwnCloudClient.USE_COOKIES) {
             return;
         }
 
@@ -265,7 +265,6 @@ public class AccountUtils {
         if (!cookiesString.isBlank()) {
             ac.setUserData(savedAccount, Constants.KEY_COOKIES, cookiesString);
         }
-
     }
 
 
