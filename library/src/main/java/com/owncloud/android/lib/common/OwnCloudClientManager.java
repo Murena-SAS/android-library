@@ -134,7 +134,7 @@ public class OwnCloudClientManager {
                 Log_OC.v(TAG, "reusing client for session " + sessionName);
             }
             AccountUtils.restoreCookies(accountName, client, context);
-            keepCredentialsUpdated(account, client);
+            keepCredentialsUpdated(context, account, client);
             keepUriUpdated(account, client);
         }
 
@@ -321,13 +321,9 @@ public class OwnCloudClientManager {
     }
 
 
-    private void keepCredentialsUpdated(OwnCloudAccount account, OwnCloudClient reusedClient) {
-        OwnCloudCredentials recentCredentials = account.getCredentials();
-        if (recentCredentials != null && !recentCredentials.getAuthToken().equals(
-                reusedClient.getCredentials().getAuthToken())) {
-            reusedClient.setCredentials(recentCredentials);
-        }
-
+    private void keepCredentialsUpdated(Context context, OwnCloudAccount account, OwnCloudClient reusedClient) throws OperationCanceledException, AuthenticatorException, IOException {
+        account.loadCredentials(context);
+        reusedClient.setCredentials(account.getCredentials());
     }
 
     // this method is just a patch; we need to distinguish accounts in the same host but
