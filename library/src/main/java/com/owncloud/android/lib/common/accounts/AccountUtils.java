@@ -188,7 +188,13 @@ public class AccountUtils {
 
         try {
             AuthState authState = AuthState.jsonDeserialize(authStateString);
-            return authState.getAccessToken();
+            String accessToken = authState.getAccessToken();
+
+            if (accessToken == null || accessToken.trim().isBlank()) {
+                return null;
+            }
+
+            return accessToken;
         } catch (JSONException e) {
             Log_OC.e(TAG, e.getMessage());
         }
