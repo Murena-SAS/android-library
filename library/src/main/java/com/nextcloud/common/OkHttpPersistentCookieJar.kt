@@ -68,6 +68,11 @@ class OkHttpPersistentCookieJar(context: Context, private val account: Account) 
         cookies.forEach {
             val cookie = Cookie.parse(url, it) ?: return@forEach
 
+            // Reference: https://gitlab.e.foundation/e/os/backlog/-/issues/3482#note_706641
+            if (cookie.name == "oidc_user") {
+                return@forEach
+            }
+
             if (cookie.expiresAt > System.currentTimeMillis()) {
                 result[cookie.name] = cookie
             }
