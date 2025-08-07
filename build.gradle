@@ -32,6 +32,7 @@ subprojects {
             url "https://jitpack.io"
             content {
                 includeGroup "com.github.bitfireAT"
+                includeGroup "com.github.Murena-SAS"
             }
         }
     }
